@@ -16,6 +16,7 @@ from sklearn.linear_model import LinearRegression
 from prophet import Prophet
 import requests
 import time
+# ================== REPORT LAB ==================
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import cm
@@ -24,6 +25,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.fonts import addMapping
+from reportlab.platypus import Table
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 st.set_page_config(page_title="PDF Dashboard Skin Steam", layout="wide")
 API_KEY = st.secrets["API_KEY"]   # đăng ký với dịch vụ API
@@ -373,7 +376,22 @@ def plot_history_and_prediction(df_skin, preds_df, date_col="Ngày", price_col="
 
     fig.update_layout(title=title, xaxis_title="Ngày", yaxis_title="Giá (VND)", height=550, template="plotly_white")
     return fig
-    
+def auto_col_widths(data, font_name='DejaVuSans', font_size=9):
+    """
+    Tính độ rộng tối thiểu của mỗi cột dựa theo nội dung dài nhất.
+    """
+    num_cols = len(data[0])
+    widths = []
+    for col in range(num_cols):
+        max_width = 0
+        for row in data:
+            text = str(row[col])
+            w = stringWidth(text, font_name, font_size)
+            if w > max_width:
+                max_width = w
+        # Cộng thêm padding 1 chút
+        widths.append(max_width + 10)
+    return widths
 # ================== PDF CREATE (sửa lỗi: trả về file path và đảm bảo tạo xong trước khi download) ==================
 def create_pdf(df_input):
     """
