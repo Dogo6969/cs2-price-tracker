@@ -414,10 +414,9 @@ def create_pdf(df_input):
     )
 
     styles = getSampleStyleSheet()
-    normal = ParagraphStyle('Normal', fontName='DejaVuSans', fontSize=10)
-    title = ParagraphStyle('Title', fontName='DejaVuSans', fontSize=18, alignment=1)
-    body = ParagraphStyle('Body', fontName='DejaVuSans', fontSize=11, leading=14)
-
+    normal = ParagraphStyle('Normal', fontName='DejaVuSans', fontSize=11)
+    title = ParagraphStyle('Title', parent=normal, fontName='DejaVuSans-Bold', fontSize=18, alignment=1)
+    body = ParagraphStyle('Body', parent=normal, fontSize=11, leading=14)
     story = []
 
     # ====== HEADER ======
