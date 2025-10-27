@@ -396,15 +396,23 @@ def auto_col_widths(data, font_name='DejaVuSans', font_size=9):
 def create_pdf(df_input):
     """
     Xuất PDF Dashboard Skin Steam bằng ReportLab (hỗ trợ tiếng Việt hoàn chỉnh)
+    - Fix: kiểm tra rỗng, tránh lỗi biến 'data'
+    - Tự động giãn cột theo nội dung (auto-fit)
+    - Font DejaVuSans Unicode đầy đủ (có hỗ trợ tiếng Việt)
     """
+    # ====== CHUẨN BỊ DỮ LIỆU ======
+    if df_input is None or df_input.empty:
+        raise ValueError("Không có dữ liệu để tạo PDF.")
+
     df_input = df_input.copy()
     df_input["Ngày"] = pd.to_datetime(df_input["Ngày"], errors="coerce")
+
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     pdf_output = os.path.abspath(f"Report_{timestamp}.pdf")
 
     # ====== TÍNH TOÁN TỔNG HỢP ======
-    total_value = int(df_input["Giá Hiện Tại (VND)"].sum() if not df_input.empty else 0)
-    total_profit_vnd = int(((df_input["Lợi Nhuận %"] / 100) * df_input["Giá Hiện Tại (VND)"]).sum() if not df_input.empty else 0)
+    total_value = int(df_input["Giá Hiện Tại (VND)"].sum())
+    total_profit_vnd = int(((df_input["Lợi Nhuận %"] / 100) * df_input["Giá Hiện Tại (VND)"]).sum())
     mua_count = int((df_input["Gợi ý"] == "MUA").sum())
     ban_count = int((df_input["Gợi ý"] == "BÁN").sum())
     cho_count = int((df_input["Gợi ý"] == "Chờ").sum())
@@ -454,28 +462,33 @@ def create_pdf(df_input):
         "Tên Skin", "Giá Hiện Tại (VND)", "Giá TB 7 Ngày (VND)",
         "Lợi Nhuận %", "Gợi ý", "Float", "Pattern"
     ]].copy()
-    # tạo data sau khi có df_display
+
     data = [list(df_display.columns)] + df_display.values.tolist()
-
     if not data or len(data[0]) == 0:
-        raise ValueError("Không có dữ liệu để xuất PDF (bảng rỗng).")
+        raise ValueError("Không có dữ liệu hợp lệ để tạo bảng PDF.")
 
-    # tự tính độ rộng cột
     col_widths = auto_col_widths(data, font_name='DejaVuSans', font_size=9)
 
-
-    # tạo bảng PDF
     table = Table(data, repeatRows=1, colWidths=col_widths)
-    table.setStyle(TableStyle([
+    table_style = TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#444444")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
-        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-    ]))
+    ])
+
+    # Thêm màu xen kẽ dòng
+    for i in range(1, len(data)):
+        if i % 2 == 0:
+            table_style.add("BACKGROUND", (0, i), (-1, i), colors.whitesmoke)
+        else:
+            table_style.add("BACKGROUND", (0, i), (-1, i), colors.beige)
+
+    table.setStyle(table_style)
     story.append(table)
 
     # ====== FOOTER ======
@@ -488,6 +501,7 @@ def create_pdf(df_input):
     # ====== XUẤT FILE ======
     doc.build(story)
     return pdf_output
+
 
 # ================== STREAMLIT UI ==================
 
