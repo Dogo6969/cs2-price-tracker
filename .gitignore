@@ -20,7 +20,7 @@ env.bak/
 
 # Ignore local data files
 lich_su_gia_skin_30ngay.csv
-
+.streamlit/secrets.toml
 # Ignore PDFs and exported charts
 *.pdf
 *.png
