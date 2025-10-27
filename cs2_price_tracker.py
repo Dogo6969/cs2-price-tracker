@@ -455,8 +455,13 @@ def create_pdf(df_input):
         "Lợi Nhuận %", "Gợi ý", "Float", "Pattern"
     ]].copy()
 
+    # tạo data sau khi có df_display
     data = [list(df_display.columns)] + df_display.values.tolist()
+
+    # tự tính độ rộng cột
     col_widths = auto_col_widths(data, font_name='DejaVuSans', font_size=9)
+
+    # tạo bảng PDF
     table = Table(data, repeatRows=1, colWidths=col_widths)
     table.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
@@ -480,7 +485,6 @@ def create_pdf(df_input):
     # ====== XUẤT FILE ======
     doc.build(story)
     return pdf_output
-
 
 # ================== STREAMLIT UI ==================
 
