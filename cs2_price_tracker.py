@@ -366,7 +366,7 @@ def plot_history_and_prediction(df_skin, preds_df, date_col="Ngày", price_col="
 # ================== PDF CREATE (sửa lỗi: trả về file path và đảm bảo tạo xong trước khi download) ==================
 def create_pdf(df_input):
     """
-    Xuất PDF Dashboard Skin Steam bằng ReportLab (chạy tốt trên Streamlit Cloud)
+    Xuất PDF Dashboard Skin Steam bằng ReportLab (hỗ trợ tiếng Việt hoàn chỉnh)
     """
     df_input = df_input.copy()
     df_input["Ngày"] = pd.to_datetime(df_input["Ngày"], errors="coerce")
@@ -382,13 +382,13 @@ def create_pdf(df_input):
     cho_count = int((df_input["Gợi ý"] == "Chờ").sum())
 
     # ====== VẼ BIỂU ĐỒ (Matplotlib) ======
-    fig, ax = plt.subplots(figsize=(7,4))
+    fig, ax = plt.subplots(figsize=(7, 4))
     for skin in df_input["Tên Skin"].unique():
-        skin_data = df_input[df_input["Tên Skin"]==skin].sort_values("Ngày")
-        ax.plot(skin_data["Ngày"], skin_data["Giá Hiện Tại (VND)"], marker='o', label=skin)
-    ax.set_title("Biểu đồ lịch sử giá Skin")
-    ax.set_xlabel("Ngày")
-    ax.set_ylabel("Giá (VND)")
+        skin_data = df_input[df_input["Tên Skin"] == skin].sort_values("Ngày")
+        ax.plot(skin_data["Ngày"], skin_data["Giá Hiện Tại (VND)"], marker="o", label=skin)
+    ax.set_title("Biểu đồ lịch sử giá Skin", fontname="DejaVu Sans")
+    ax.set_xlabel("Ngày", fontname="DejaVu Sans")
+    ax.set_ylabel("Giá (VND)", fontname="DejaVu Sans")
     ax.legend(fontsize=7)
     plt.tight_layout()
 
@@ -396,28 +396,31 @@ def create_pdf(df_input):
     fig.savefig(chart_file, dpi=150)
     plt.close(fig)
 
-    # ====== CẤU HÌNH PDF ======
-    doc = SimpleDocTemplate(pdf_output, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    # ====== CẤU HÌNH FONT & STYLE ======
+    doc = SimpleDocTemplate(
+        pdf_output, pagesize=A4,
+        rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
+    )
+
     styles = getSampleStyleSheet()
-    normal = styles["Normal"]
-    title = ParagraphStyle('Title', parent=styles['Title'], fontSize=18, alignment=1)
-    body = ParagraphStyle('Body', parent=styles['Normal'], fontSize=11, leading=14)
+    normal = ParagraphStyle('Normal', fontName='DejaVuSans', fontSize=10)
+    title = ParagraphStyle('Title', fontName='DejaVuSans', fontSize=18, alignment=1)
+    body = ParagraphStyle('Body', fontName='DejaVuSans', fontSize=11, leading=14)
 
     story = []
 
     # ====== HEADER ======
-    story.append(Paragraph("📊 Báo cáo Dashboard Skin Steam", title))
-    story.append(Spacer(1, 0.3*cm))
+    story.append(Paragraph("<b>Báo cáo Dashboard Skin Steam</b>", title))
+    story.append(Spacer(1, 0.3 * cm))
     story.append(Paragraph(f"Thời gian xuất: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", body))
-    story.append(Spacer(1, 0.2*cm))
     story.append(Paragraph(f"Tổng giá trị: <b>{total_value:,} VND</b>", body))
     story.append(Paragraph(f"Tổng lợi nhuận ước tính: <b>{total_profit_vnd:,} VND</b>", body))
     story.append(Paragraph(f"Số lượng gợi ý: MUA {mua_count} — BÁN {ban_count} — CHỜ {cho_count}", body))
-    story.append(Spacer(1, 0.5*cm))
+    story.append(Spacer(1, 0.5 * cm))
 
     # ====== BIỂU ĐỒ ======
-    story.append(Image(chart_file, width=16*cm, height=8*cm))
-    story.append(Spacer(1, 0.5*cm))
+    story.append(Image(chart_file, width=16 * cm, height=8 * cm))
+    story.append(Spacer(1, 0.5 * cm))
 
     # ====== BẢNG DỮ LIỆU ======
     df_display = df_input[[
@@ -426,25 +429,34 @@ def create_pdf(df_input):
     ]].copy()
 
     data = [list(df_display.columns)] + df_display.values.tolist()
-    table = Table(data, repeatRows=1, colWidths=[5*cm, 3*cm, 3*cm, 2*cm, 2*cm, 2*cm, 2*cm])
+    table = Table(
+        data,
+        repeatRows=1,
+        colWidths=[5 * cm, 3 * cm, 3 * cm, 2 * cm, 2 * cm, 2 * cm, 2 * cm]
+    )
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (-1,0), colors.grey),
-        ("TEXTCOLOR", (0,0), (-1,0), colors.whitesmoke),
-        ("ALIGN", (0,0), (-1,-1), "CENTER"),
-        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
-        ("BOTTOMPADDING", (0,0), (-1,0), 6),
-        ("BACKGROUND", (0,1), (-1,-1), colors.beige),
-        ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
     ]))
     story.append(table)
 
-    # ====== KẾT ======
-    story.append(Spacer(1, 0.5*cm))
-    story.append(Paragraph("Báo cáo được tạo tự động bởi ứng dụng Streamlit — CS2 Skin Tracker", body))
+    # ====== FOOTER ======
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(Paragraph(
+        "Báo cáo được tạo tự động bằng ứng dụng <b>Streamlit — CS2 Skin Tracker</b>",
+        body
+    ))
 
     # ====== XUẤT FILE ======
     doc.build(story)
     return pdf_output
+
 
 # ================== STREAMLIT UI ==================
 
