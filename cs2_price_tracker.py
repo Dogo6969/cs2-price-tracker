@@ -23,7 +23,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 
 st.set_page_config(page_title="PDF Dashboard Skin Steam", layout="wide")
-API_KEY = "CBFDBC13D7E3AB96427ABCB3722EC7BA"  # đăng ký với dịch vụ API
+API_KEY = st.secrets["API_KEY"]  # đăng ký với dịch vụ API
 API_URL = "https://api.csgoskins.gg/api/v1/basic-item-details"
 # ============ Cấu hình wkhtmltopdf (điều chỉnh đường dẫn nếu cần) ============
 pdf_config = None
