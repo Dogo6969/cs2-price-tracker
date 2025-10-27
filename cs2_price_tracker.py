@@ -373,7 +373,24 @@ def plot_history_and_prediction(df_skin, preds_df, date_col="Ngày", price_col="
 
     fig.update_layout(title=title, xaxis_title="Ngày", yaxis_title="Giá (VND)", height=550, template="plotly_white")
     return fig
-
+def auto_col_widths(data, font_name='DejaVuSans', font_size=9):
+    """
+    Tính độ rộng tối thiểu của mỗi cột dựa theo nội dung dài nhất.
+    """
+    num_cols = len(data[0])
+    widths = []
+    for col in range(num_cols):
+        max_width = 0
+        for row in data:
+            text = str(row[col])
+            w = stringWidth(text, font_name, font_size)
+            if w > max_width:
+                max_width = w
+        # Cộng thêm padding 1 chút
+        widths.append(max_width + 10)
+    return widths
+col_widths = auto_col_widths(table_data, font_name='DejaVuSans', font_size=9)
+table = Table(table_data, colWidths=col_widths)
 # ================== PDF CREATE (sửa lỗi: trả về file path và đảm bảo tạo xong trước khi download) ==================
 def create_pdf(df_input):
     """
