@@ -1,9 +1,9 @@
 streamlit
 pandas
-requests
+numpy
 matplotlib
 plotly
 prophet
 scikit-learn
-pdfkit
-numpy
+requests
+reportlab
