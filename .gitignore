@@ -1,0 +1,32 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+
+# Ignore temporary or local configuration files
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+
+# Ignore local data files
+lich_su_gia_skin_30ngay.csv
+
+# Ignore PDFs and exported charts
+*.pdf
+*.png
+
+# Ignore Streamlit local config
+.streamlit/
+
+# Ignore Jupyter notebooks checkpoints
+.ipynb_checkpoints/
