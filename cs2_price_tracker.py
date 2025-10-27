@@ -454,12 +454,15 @@ def create_pdf(df_input):
         "Tên Skin", "Giá Hiện Tại (VND)", "Giá TB 7 Ngày (VND)",
         "Lợi Nhuận %", "Gợi ý", "Float", "Pattern"
     ]].copy()
-
     # tạo data sau khi có df_display
     data = [list(df_display.columns)] + df_display.values.tolist()
 
+    if not data or len(data[0]) == 0:
+        raise ValueError("Không có dữ liệu để xuất PDF (bảng rỗng).")
+
     # tự tính độ rộng cột
     col_widths = auto_col_widths(data, font_name='DejaVuSans', font_size=9)
+
 
     # tạo bảng PDF
     table = Table(data, repeatRows=1, colWidths=col_widths)
