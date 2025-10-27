@@ -21,11 +21,22 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.fonts import addMapping
 
 st.set_page_config(page_title="PDF Dashboard Skin Steam", layout="wide")
 API_KEY = st.secrets["API_KEY"]   # đăng ký với dịch vụ API
 API_URL = "https://api.csgoskins.gg/api/v1/basic-item-details"
-
+# ================== DEJAVUSans ==================
+pdfmetrics.registerFont(TTFont('DejaVuSans', 'fonts/DejaVuSans.ttf'))
+pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'fonts/DejaVuSans-Bold.ttf'))
+pdfmetrics.registerFont(TTFont('DejaVuSans-Oblique', 'fonts/DejaVuSans-Oblique.ttf'))
+pdfmetrics.registerFont(TTFont('DejaVuSans-BoldOblique', 'fonts/DejaVuSans-BoldOblique.ttf'))
+addMapping('DejaVuSans', 0, 0, 'DejaVuSans')             # normal
+addMapping('DejaVuSans', 0, 1, 'DejaVuSans-Oblique')     # italic
+addMapping('DejaVuSans', 1, 0, 'DejaVuSans-Bold')        # bold
+addMapping('DejaVuSans', 1, 1, 'DejaVuSans-BoldOblique') # bold+italic
 # ================== DANH SÁCH SKIN ==================
 skins = [
     "AWP | Neo-Noir (Minimal Wear)",
