@@ -462,12 +462,12 @@ def create_pdf(df_input):
         "Tên Skin", "Giá Hiện Tại (VND)", "Giá TB 7 Ngày (VND)",
         "Lợi Nhuận %", "Gợi ý", "Float", "Pattern"
     ]].copy()
-    table_data = [list(df_display.columns)] + df_display.values.tolist()
-    if not table_data or len(table_data[0]) == 0:
+    data = [list(df_display.columns)] + df_display.values.tolist()
+    if not data or len(data[0]) == 0:
         raise ValueError("Không có dữ liệu hợp lệ để tạo PDF.")
 
-    col_widths = auto_col_widths(table_data, font_name='DejaVuSans', font_size=9)
-    table = Table(table_data, colWidths=col_widths)
+    col_widths = auto_col_widths(data, font_name='DejaVuSans', font_size=9)
+    table = Table(data, colWidths=col_widths)
     table_style = TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
