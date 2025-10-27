@@ -8,7 +8,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from urllib.parse import urlencode
-import pdfkit
 import base64
 from io import BytesIO
 import numpy as np
@@ -17,11 +16,16 @@ from sklearn.linear_model import LinearRegression
 from prophet import Prophet
 import requests
 import time
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+
 st.set_page_config(page_title="PDF Dashboard Skin Steam", layout="wide")
 API_KEY = "CBFDBC13D7E3AB96427ABCB3722EC7BA"  # đăng ký với dịch vụ API
 API_URL = "https://api.csgoskins.gg/api/v1/basic-item-details"
 # ============ Cấu hình wkhtmltopdf (điều chỉnh đường dẫn nếu cần) ============
-pdf_path = r"D:\Project\wkhtmltopdf\bin\wkhtmltopdf.exe"
 pdf_config = None
 if os.path.exists(pdf_path):
     try:
@@ -371,71 +375,85 @@ def plot_history_and_prediction(df_skin, preds_df, date_col="Ngày", price_col="
 
 # ================== PDF CREATE (sửa lỗi: trả về file path và đảm bảo tạo xong trước khi download) ==================
 def create_pdf(df_input):
+    """
+    Xuất PDF Dashboard Skin Steam bằng ReportLab (chạy tốt trên Streamlit Cloud)
+    """
     df_input = df_input.copy()
     df_input["Ngày"] = pd.to_datetime(df_input["Ngày"], errors="coerce")
 
-    total_value = int(df_input["Giá Hiện Tại (VND)"].sum() if not df_input.empty else 0)
-    total_profit_vnd = int(((df_input["Lợi Nhuận %"] / 100) * df_input["Giá Hiện Tại (VND)"]).sum() if not df_input.empty else 0)
-    mua_count = int((df_input["Gợi ý"] == "MUA").sum()) if "Gợi ý" in df_input.columns else 0
-    ban_count = int((df_input["Gợi ý"] == "BÁN").sum()) if "Gợi ý" in df_input.columns else 0
-    cho_count = int((df_input["Gợi ý"] == "Chờ").sum()) if "Gợi ý" in df_input.columns else 0
-
-    # tạo chart (matplotlib) và lưu file image
-    fig, axs = plt.subplots(2,1, figsize=(10,8))
-    colors = plt.cm.tab10.colors
-    color_map = {}
-    for i, skin in enumerate(df_input["Tên Skin"].unique()):
-        skin_data = df_input[df_input["Tên Skin"]==skin].sort_values("Ngày")
-        color_map[skin] = colors[i % len(colors)]
-        axs[0].plot(skin_data["Ngày"], skin_data["Giá Hiện Tại (VND)"], marker='o', label=skin, color=color_map[skin])
-    axs[0].set_title("Lịch sử giá skin")
-    axs[0].set_ylabel("Giá (VND)")
-    axs[0].legend(loc='center left', bbox_to_anchor=(1,0.5))
-    for skin in df_input["Tên Skin"].unique():
-        skin_data = df_input[df_input["Tên Skin"]==skin]
-        axs[1].scatter(skin_data["Rủi ro"], skin_data["Thanh khoản"], c=[color_map[skin]]*len(skin_data), s=80)
-    axs[1].set_title("Rủi ro vs Thanh khoản")
-    axs[1].set_xlabel("Rủi ro")
-    axs[1].set_ylabel("Thanh khoản")
-    handles = [plt.Line2D([0],[0], marker='o', color='w', markerfacecolor=color_map[s], markersize=8) for s in df_input["Tên Skin"].unique()]
-    labels = list(df_input["Tên Skin"].unique())
-    axs[1].legend(handles, labels, loc='center left', bbox_to_anchor=(1,0.5))
-    plt.tight_layout()
-    chart_file = os.path.abspath("chart_export.png")
-    fig.savefig(chart_file, dpi=150, bbox_inches="tight")
-    plt.close(fig)
-
-    # HTML
-    html_table = df_input.to_html(index=False, classes="data-table", border=1)
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    html_content = f"""
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body>
-        <h2>Dashboard Skin Steam</h2>
-        <p>Report: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-        <ul>
-            <li>Tổng giá trị: {total_value:,} VND</li>
-            <li>Tổng lợi nhuận ước tính: {total_profit_vnd:,} VND</li>
-            <li>MUA: {mua_count} — BÁN: {ban_count} — Chờ: {cho_count}</li>
-        </ul>
-        <img src="file:///{chart_file.replace('\\', '/')}" width="800"><br>
-        {html_table}
-    </body>
-    </html>
-    """
     pdf_output = os.path.abspath(f"Report_{timestamp}.pdf")
 
-    options = {
-        "enable-local-file-access": "",
-        "encoding": "UTF-8",
-        "quiet": ""
-    }
-    # nếu pdf_config None thì thử không dùng configuration
-    if pdf_config is not None:
-        pdfkit.from_string(html_content, pdf_output, configuration=pdf_config, options=options)
-    else:
-        pdfkit.from_string(html_content, pdf_output, options=options)
+    # ====== TÍNH TOÁN TỔNG HỢP ======
+    total_value = int(df_input["Giá Hiện Tại (VND)"].sum() if not df_input.empty else 0)
+    total_profit_vnd = int(((df_input["Lợi Nhuận %"] / 100) * df_input["Giá Hiện Tại (VND)"]).sum() if not df_input.empty else 0)
+    mua_count = int((df_input["Gợi ý"] == "MUA").sum())
+    ban_count = int((df_input["Gợi ý"] == "BÁN").sum())
+    cho_count = int((df_input["Gợi ý"] == "Chờ").sum())
+
+    # ====== VẼ BIỂU ĐỒ (Matplotlib) ======
+    fig, ax = plt.subplots(figsize=(7,4))
+    for skin in df_input["Tên Skin"].unique():
+        skin_data = df_input[df_input["Tên Skin"]==skin].sort_values("Ngày")
+        ax.plot(skin_data["Ngày"], skin_data["Giá Hiện Tại (VND)"], marker='o', label=skin)
+    ax.set_title("Biểu đồ lịch sử giá Skin")
+    ax.set_xlabel("Ngày")
+    ax.set_ylabel("Giá (VND)")
+    ax.legend(fontsize=7)
+    plt.tight_layout()
+
+    chart_file = os.path.abspath("chart_temp.png")
+    fig.savefig(chart_file, dpi=150)
+    plt.close(fig)
+
+    # ====== CẤU HÌNH PDF ======
+    doc = SimpleDocTemplate(pdf_output, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    styles = getSampleStyleSheet()
+    normal = styles["Normal"]
+    title = ParagraphStyle('Title', parent=styles['Title'], fontSize=18, alignment=1)
+    body = ParagraphStyle('Body', parent=styles['Normal'], fontSize=11, leading=14)
+
+    story = []
+
+    # ====== HEADER ======
+    story.append(Paragraph("📊 Báo cáo Dashboard Skin Steam", title))
+    story.append(Spacer(1, 0.3*cm))
+    story.append(Paragraph(f"Thời gian xuất: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", body))
+    story.append(Spacer(1, 0.2*cm))
+    story.append(Paragraph(f"Tổng giá trị: <b>{total_value:,} VND</b>", body))
+    story.append(Paragraph(f"Tổng lợi nhuận ước tính: <b>{total_profit_vnd:,} VND</b>", body))
+    story.append(Paragraph(f"Số lượng gợi ý: MUA {mua_count} — BÁN {ban_count} — CHỜ {cho_count}", body))
+    story.append(Spacer(1, 0.5*cm))
+
+    # ====== BIỂU ĐỒ ======
+    story.append(Image(chart_file, width=16*cm, height=8*cm))
+    story.append(Spacer(1, 0.5*cm))
+
+    # ====== BẢNG DỮ LIỆU ======
+    df_display = df_input[[
+        "Tên Skin", "Giá Hiện Tại (VND)", "Giá TB 7 Ngày (VND)",
+        "Lợi Nhuận %", "Gợi ý", "Float", "Pattern"
+    ]].copy()
+
+    data = [list(df_display.columns)] + df_display.values.tolist()
+    table = Table(data, repeatRows=1, colWidths=[5*cm, 3*cm, 3*cm, 2*cm, 2*cm, 2*cm, 2*cm])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.grey),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.whitesmoke),
+        ("ALIGN", (0,0), (-1,-1), "CENTER"),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0,0), (-1,0), 6),
+        ("BACKGROUND", (0,1), (-1,-1), colors.beige),
+        ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+    ]))
+    story.append(table)
+
+    # ====== KẾT ======
+    story.append(Spacer(1, 0.5*cm))
+    story.append(Paragraph("Báo cáo được tạo tự động bởi ứng dụng Streamlit — CS2 Skin Tracker", body))
+
+    # ====== XUẤT FILE ======
+    doc.build(story)
     return pdf_output
 
 # ================== STREAMLIT UI ==================
