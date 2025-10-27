@@ -715,7 +715,10 @@ else:
 
 # ================== EXPORT PDF (sửa lỗi download) ==================
 if st.button("Xuất PDF Dashboard nâng cao"):
-    data = None  # ← thêm dòng này
+    pdf_file = None
+    data = None
+    filename = None
+
     if df_filtered.empty:
         st.warning("Không có dữ liệu để xuất PDF.")
     else:
@@ -725,7 +728,16 @@ if st.button("Xuất PDF Dashboard nâng cao"):
                 data = f.read()
             filename = os.path.basename(pdf_file)
             st.success(f"Đã tạo PDF: {filename}")
-            st.download_button(label="⬇ Tải PDF Dashboard", data=data, file_name=filename, mime="application/pdf")
         except Exception as e:
             st.error(f"Lỗi khi xuất PDF: {e}")
+
+    # 👉 Đặt ngoài khối try/except
+    if data and filename:
+        st.download_button(
+            label="⬇ Tải PDF Dashboard",
+            data=data,
+            file_name=filename,
+            mime="application/pdf"
+        )
+
 
