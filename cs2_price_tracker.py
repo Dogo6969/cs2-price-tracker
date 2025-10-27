@@ -23,18 +23,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 
 st.set_page_config(page_title="PDF Dashboard Skin Steam", layout="wide")
-API_KEY = st.secrets["API_KEY"]  # đăng ký với dịch vụ API
+API_KEY = st.secrets["API_KEY"]   # đăng ký với dịch vụ API
 API_URL = "https://api.csgoskins.gg/api/v1/basic-item-details"
-# ============ Cấu hình wkhtmltopdf (điều chỉnh đường dẫn nếu cần) ============
-pdf_config = None
-if os.path.exists(pdf_path):
-    try:
-        pdf_config = pdfkit.configuration(wkhtmltopdf=pdf_path)
-    except Exception as e:
-        pdf_config = None
-        st.warning(f"Không thể khởi tạo pdfkit configuration: {e}")
-else:
-    st.warning("Chưa tìm thấy wkhtmltopdf tại đường dẫn. PDF export có thể lỗi.")
 
 # ================== DANH SÁCH SKIN ==================
 skins = [
