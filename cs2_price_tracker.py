@@ -397,13 +397,12 @@ def create_pdf(df_input):
     """
     Xuất PDF Dashboard Skin Steam bằng ReportLab (hỗ trợ tiếng Việt hoàn chỉnh)
     """
-    df_input = df_input.copy()
-    df_input["Ngày"] = pd.to_datetime(df_input["Ngày"], errors="coerce")
-
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    pdf_output = os.path.abspath(f"Report_{timestamp}.pdf")
     col_widths = auto_col_widths(data, font_name='DejaVuSans', font_size=9)
     table = Table(data, repeatRows=1, colWidths=col_widths)
+    df_input = df_input.copy()
+    df_input["Ngày"] = pd.to_datetime(df_input["Ngày"], errors="coerce")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    pdf_output = os.path.abspath(f"Report_{timestamp}.pdf")
 
     # ====== TÍNH TOÁN TỔNG HỢP ======
     total_value = int(df_input["Giá Hiện Tại (VND)"].sum() if not df_input.empty else 0)
