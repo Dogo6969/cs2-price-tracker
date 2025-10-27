@@ -373,24 +373,7 @@ def plot_history_and_prediction(df_skin, preds_df, date_col="Ngày", price_col="
 
     fig.update_layout(title=title, xaxis_title="Ngày", yaxis_title="Giá (VND)", height=550, template="plotly_white")
     return fig
-def auto_col_widths(data, font_name='DejaVuSans', font_size=9):
-    """
-    Tính độ rộng tối thiểu của mỗi cột dựa theo nội dung dài nhất.
-    """
-    num_cols = len(data[0])
-    widths = []
-    for col in range(num_cols):
-        max_width = 0
-        for row in data:
-            text = str(row[col])
-            w = stringWidth(text, font_name, font_size)
-            if w > max_width:
-                max_width = w
-        # Cộng thêm padding 1 chút
-        widths.append(max_width + 10)
-    return widths
-col_widths = auto_col_widths(table_data, font_name='DejaVuSans', font_size=9)
-table = Table(table_data, colWidths=col_widths)
+    
 # ================== PDF CREATE (sửa lỗi: trả về file path và đảm bảo tạo xong trước khi download) ==================
 def create_pdf(df_input):
     """
@@ -401,6 +384,8 @@ def create_pdf(df_input):
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     pdf_output = os.path.abspath(f"Report_{timestamp}.pdf")
+    col_widths = auto_col_widths(data, font_name='DejaVuSans', font_size=9)
+    table = Table(data, repeatRows=1, colWidths=col_widths)
 
     # ====== TÍNH TOÁN TỔNG HỢP ======
     total_value = int(df_input["Giá Hiện Tại (VND)"].sum() if not df_input.empty else 0)
@@ -456,11 +441,8 @@ def create_pdf(df_input):
     ]].copy()
 
     data = [list(df_display.columns)] + df_display.values.tolist()
-    table = Table(
-        data,
-        repeatRows=1,
-        colWidths=[5 * cm, 3 * cm, 3 * cm, 2 * cm, 2 * cm, 2 * cm, 2 * cm]
-    )
+    col_widths = auto_col_widths(data, font_name='DejaVuSans', font_size=9)
+    table = Table(data, repeatRows=1, colWidths=col_widths)
     table.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
@@ -506,7 +488,7 @@ st.sidebar.subheader("Bộ lọc Skin")
 
 available_skins = df["Tên Skin"].unique() if not df.empty else skins
 
-# ✅ Vẫn dùng multiselect để lọc dữ liệu thật
+# Vẫn dùng multiselect để lọc dữ liệu thật
 skin_selected = st.sidebar.multiselect(
     "Chọn Skin để phân tích dữ liệu",
     options=available_skins,
@@ -515,7 +497,7 @@ skin_selected = st.sidebar.multiselect(
 
 period_days = st.sidebar.selectbox("Chọn khoảng thời gian", [7, 14, 30], index=2)
 
-# ✅ Bổ sung dropdown HTML chỉ để hiển thị màu theo độ hiếm
+# Bổ sung dropdown HTML chỉ để hiển thị màu theo độ hiếm
 dropdown_html = """
 <p><strong>Độ hiếm — hiển thị màu theo rarity:</strong></p>
 <select multiple style='width: 100%; height: 220px; padding:6px;'>
